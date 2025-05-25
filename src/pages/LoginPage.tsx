@@ -5,37 +5,38 @@ import Footer from '../components/layout/Footer';
 import Button from '../components/common/Button';
 import { useAuth } from '../context/AuthContext';
 
-type UserRole = 'hospital' | 'patient' | null;
-
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>(null);
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!role) {
-      setError('Please select a role');
-      return;
-    }
-    
     try {
-      await login(email, password, role);
+      setError('');
+      await login(email, password);
       
-      // Redirect based on role
-      if (role === 'hospital') {
-        navigate('/hospital-dashboard');
-      } else {
-        navigate('/patient-dashboard');
-      }
-    } catch (err) {
-      setError('Invalid email or password');
+      // The navigation will be handled by useEffect when currentUser changes
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Invalid email or password');
     }
   };
+
+  // Handle navigation based on user role after login
+  React.useEffect(() => {
+    if (currentUser && !isLoading) {
+      // Redirect based on role
+      if (currentUser.role === 'hospital') {
+        navigate('/hospital-dashboard');
+      } else if (currentUser.role === 'patient') {
+        navigate('/patient-dashboard');
+      }
+    }
+  }, [currentUser, isLoading, navigate]);
 
   return (
     <>
@@ -54,70 +55,6 @@ const LoginPage: React.FC = () => {
               )}
               
               <form onSubmit={handleSubmit}>
-                {/* Role Selection */}
-                <div className="mb-6">
-                  <label className="block text-neutral-700 font-medium mb-3">
-                    I am a:
-                  </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      className={`flex flex-col items-center justify-center p-4 border rounded-lg transition-all ${
-                        role === 'hospital'
-                          ? 'border-primary-400 bg-primary-50 text-primary-700'
-                          : 'border-neutral-200 hover:border-primary-200 hover:bg-primary-50/50'
-                      }`}
-                      onClick={() => setRole('hospital')}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`h-8 w-8 mb-2 ${
-                          role === 'hospital' ? 'text-primary-500' : 'text-neutral-400'
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                        />
-                      </svg>
-                      Hospital Staff
-                    </button>
-                    
-                    <button
-                      type="button"
-                      className={`flex flex-col items-center justify-center p-4 border rounded-lg transition-all ${
-                        role === 'patient'
-                          ? 'border-primary-400 bg-primary-50 text-primary-700'
-                          : 'border-neutral-200 hover:border-primary-200 hover:bg-primary-50/50'
-                      }`}
-                      onClick={() => setRole('patient')}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`h-8 w-8 mb-2 ${
-                          role === 'patient' ? 'text-primary-500' : 'text-neutral-400'
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                      Patient
-                    </button>
-                  </div>
-                </div>
-              
                 {/* Email Input */}
                 <div className="mb-4">
                   <label htmlFor="email" className="block text-neutral-700 font-medium mb-2">
@@ -130,6 +67,7 @@ const LoginPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -150,6 +88,7 @@ const LoginPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 

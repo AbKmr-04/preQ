@@ -1,20 +1,23 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  User as FirebaseUser
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
+import { createUser, getUser, User } from '../services/database';
 
 type UserRole = 'hospital' | 'patient' | 'doctor' | null;
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
-
 interface AuthContextType {
   currentUser: User | null;
+  firebaseUser: FirebaseUser | null;
   isLoading: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<void>;
-  signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: UserRole, additionalData?: any) => Promise<void>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -30,35 +33,38 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem('preq_user');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setFirebaseUser(user);
+      
+      if (user) {
+        // Get user data from Firestore
+        try {
+          const userData = await getUser(user.uid);
+          setCurrentUser(userData);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setCurrentUser(null);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      
+      setIsLoading(false);
+    });
+
+    return unsubscribe;
   }, []);
 
-  // For demo purposes, we're using localStorage
-  // In a real app, you'd use a proper authentication system
-  const login = async (email: string, password: string, role: UserRole) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create mock user
-      const user = {
-        id: `user-${Date.now()}`,
-        name: email.split('@')[0],
-        email,
-        role
-      };
-      
-      setCurrentUser(user);
-      localStorage.setItem('preq_user', JSON.stringify(user));
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userData = await getUser(userCredential.user.uid);
+      setCurrentUser(userData);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -67,22 +73,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (name: string, email: string, password: string, role: UserRole) => {
+  const signup = async (name: string, email: string, password: string, role: UserRole, additionalData?: any) => {
+    if (!role) throw new Error('Role is required');
+    
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Create new user
-      const user = {
-        id: `user-${Date.now()}`,
+      // Create user document in Firestore
+      const userData: Omit<User, 'id' | 'createdAt'> = {
         name,
         email,
-        role
+        role,
+        ...additionalData
       };
       
-      setCurrentUser(user);
-      localStorage.setItem('preq_user', JSON.stringify(user));
+      await createUser(userCredential.user.uid, userData);
+      
+      // Set current user
+      const newUser: User = {
+        id: userCredential.user.uid,
+        ...userData,
+        createdAt: new Date()
+      };
+      setCurrentUser(newUser);
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
@@ -91,13 +106,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('preq_user');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setCurrentUser(null);
+      setFirebaseUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
   };
 
   const value = {
     currentUser,
+    firebaseUser,
     isLoading,
     login,
     signup,

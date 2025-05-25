@@ -8,16 +8,38 @@ import {
   where, 
   Timestamp,
   CollectionReference,
-  DocumentReference
+  DocumentReference,
+  addDoc
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 // Type definitions
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'hospital' | 'patient' | 'doctor';
+  createdAt: any;
+  // Hospital-specific fields
+  hospitalName?: string;
+  // Patient-specific fields
+  age?: number;
+  gender?: string;
+  phone?: string;
+}
+
 export interface Doctor {
+  id?: string;
   name: string;
   specialization: string;
+  specialty?: string;
+  email?: string;
+  phone?: string;
   hospitalId: string;
   available: boolean;
+  status?: 'active' | 'inactive';
+  qrCode?: string;
+  createdAt?: any;
 }
 
 export interface Patient {
@@ -51,20 +73,57 @@ export interface Appointment {
 }
 
 // Collection references
+const usersRef = collection(db, 'users');
 const doctorsRef = collection(db, 'doctors');
 const patientsRef = collection(db, 'patients');
 const responsesRef = collection(db, 'responses');
 const appointmentsRef = collection(db, 'appointments');
 
+// User operations
+export const createUser = async (userId: string, userData: Omit<User, 'id' | 'createdAt'>) => {
+  await setDoc(doc(usersRef, userId), {
+    ...userData,
+    id: userId,
+    createdAt: Timestamp.now()
+  });
+};
+
+export const getUser = async (userId: string) => {
+  const docRef = doc(usersRef, userId);
+  const docSnap = await getDoc(docRef);
+  return docSnap.exists() ? docSnap.data() as User : null;
+};
+
 // Doctor operations
-export const addDoctor = async (doctorId: string, doctorData: Doctor) => {
-  await setDoc(doc(doctorsRef, doctorId), doctorData);
+export const addDoctor = async (doctorData: Omit<Doctor, 'id' | 'createdAt'>) => {
+  const docRef = await addDoc(doctorsRef, {
+    ...doctorData,
+    createdAt: Timestamp.now(),
+    status: doctorData.status || 'active',
+    available: doctorData.available !== undefined ? doctorData.available : true,
+    qrCode: doctorData.qrCode || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=doctor-${Date.now()}`
+  });
+  return docRef.id;
+};
+
+export const getAllDoctors = async (hospitalId?: string) => {
+  let q = query(doctorsRef);
+  
+  if (hospitalId) {
+    q = query(doctorsRef, where('hospitalId', '==', hospitalId));
+  }
+  
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  } as Doctor));
 };
 
 export const getDoctor = async (doctorId: string) => {
   const docRef = doc(doctorsRef, doctorId);
   const docSnap = await getDoc(docRef);
-  return docSnap.exists() ? docSnap.data() as Doctor : null;
+  return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as Doctor : null;
 };
 
 // Patient operations

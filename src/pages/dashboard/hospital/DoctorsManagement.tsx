@@ -1,77 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { Search, Plus, Download, QrCode, Edit, Trash2, User } from 'lucide-react';
+import { Search, Plus, Download, QrCode, Edit, Trash2, User, Loader2 } from 'lucide-react';
 import Button from '../../../components/common/Button';
-
-interface Doctor {
-  id: string;
-  name: string;
-  specialty: string;
-  email: string;
-  phone: string;
-  status: 'active' | 'inactive';
-  qrCode: string;
-}
+import { useAuth } from '../../../context/AuthContext';
+import { addDoctor, getAllDoctors, Doctor } from '../../../services/database';
 
 const DoctorsManagement: React.FC = () => {
-  // Mock data
-  const [doctors, setDoctors] = useState<Doctor[]>([
-    {
-      id: '1',
-      name: 'Dr. Sarah Johnson',
-      specialty: 'Cardiology',
-      email: 'sarah.johnson@preq.com',
-      phone: '(555) 123-4567',
-      status: 'active',
-      qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=doctor-1'
-    },
-    {
-      id: '2',
-      name: 'Dr. Michael Chen',
-      specialty: 'Pediatrics',
-      email: 'michael.chen@preq.com',
-      phone: '(555) 987-6543',
-      status: 'active',
-      qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=doctor-2'
-    },
-    {
-      id: '3',
-      name: 'Dr. Emily Rodriguez',
-      specialty: 'Dermatology',
-      email: 'emily.rodriguez@preq.com',
-      phone: '(555) 456-7890',
-      status: 'active',
-      qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=doctor-3'
-    },
-    {
-      id: '4',
-      name: 'Dr. David Kim',
-      specialty: 'Orthopedics',
-      email: 'david.kim@preq.com',
-      phone: '(555) 234-5678',
-      status: 'active',
-      qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=doctor-4'
-    },
-    {
-      id: '5',
-      name: 'Dr. Lisa Wong',
-      specialty: 'General Medicine',
-      email: 'lisa.wong@preq.com',
-      phone: '(555) 876-5432',
-      status: 'inactive',
-      qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=doctor-5'
-    }
-  ]);
-  
+  const { currentUser } = useAuth();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
+  // Load doctors on component mount
+  useEffect(() => {
+    loadDoctors();
+  }, [currentUser]);
+
+  const loadDoctors = async () => {
+    if (!currentUser) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      const doctorsData = await getAllDoctors(currentUser.id); // Using user ID as hospital ID for now
+      setDoctors(doctorsData);
+    } catch (err) {
+      console.error('Error loading doctors:', err);
+      setError('Failed to load doctors. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredDoctors = doctors.filter(doctor => 
     doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (doctor.specialty || doctor.specialization)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doctor.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   const DoctorsList = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          <span className="ml-2 text-neutral-600">Loading doctors...</span>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="text-center py-12">
+            <div className="text-error-500 mb-4">⚠️</div>
+            <h3 className="text-lg font-medium text-neutral-700 mb-2">Error Loading Doctors</h3>
+            <p className="text-neutral-500 mb-4">{error}</p>
+            <Button onClick={loadDoctors} variant="primary">
+              Try Again
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -122,20 +114,20 @@ const DoctorsManagement: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-neutral-600">{doctor.specialty}</td>
+                    <td className="px-6 py-4 text-neutral-600">{doctor.specialty || doctor.specialization}</td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-neutral-600">{doctor.email}</div>
-                      <div className="text-sm text-neutral-500">{doctor.phone}</div>
+                      <div className="text-sm text-neutral-600">{doctor.email || 'N/A'}</div>
+                      <div className="text-sm text-neutral-500">{doctor.phone || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span 
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          doctor.status === 'active' 
+                          (doctor.status === 'active' || doctor.available) 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-neutral-100 text-neutral-800'
                         }`}
                       >
-                        {doctor.status === 'active' ? 'Active' : 'Inactive'}
+                        {(doctor.status === 'active' || doctor.available) ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -158,7 +150,7 @@ const DoctorsManagement: React.FC = () => {
             </table>
           </div>
           
-          {filteredDoctors.length === 0 && (
+          {filteredDoctors.length === 0 && !loading && (
             <div className="py-12 flex flex-col items-center justify-center">
               <User className="h-12 w-12 text-neutral-300 mb-4" />
               <h3 className="text-lg font-medium text-neutral-700 mb-1">No doctors found</h3>
@@ -184,23 +176,47 @@ const DoctorsManagement: React.FC = () => {
     const [specialty, setSpecialty] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       
-      // Add new doctor to list
-      const newDoctor: Doctor = {
-        id: `${doctors.length + 1}`,
-        name: doctorName,
-        specialty,
-        email,
-        phone,
-        status: 'active',
-        qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=doctor-${doctors.length + 1}`
-      };
+      if (!currentUser) {
+        setSubmitError('User not authenticated');
+        return;
+      }
       
-      setDoctors([...doctors, newDoctor]);
-      navigate('/hospital-dashboard/doctors');
+      setIsSubmitting(true);
+      setSubmitError(null);
+      
+      try {
+        // Create new doctor data with all required fields
+        const newDoctorData: Omit<Doctor, 'id' | 'createdAt'> = {
+          name: doctorName,
+          specialization: specialty, // Required field
+          specialty: specialty, // For UI compatibility
+          email,
+          phone,
+          hospitalId: currentUser.id, // Required field
+          available: true, // Required field
+          status: 'active'
+        };
+        
+        const doctorId = await addDoctor(newDoctorData);
+        console.log('Doctor added with ID:', doctorId);
+        
+        // Reload the doctors list
+        await loadDoctors();
+        
+        // Navigate back to doctors list
+        navigate('/hospital-dashboard/doctors');
+      } catch (error) {
+        console.error('Error adding doctor:', error);
+        setSubmitError('Failed to add doctor. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     };
     
     return (
@@ -208,6 +224,12 @@ const DoctorsManagement: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">Add New Doctor</h1>
         </div>
+        
+        {submitError && (
+          <div className="bg-error-50 border border-error-200 text-error-700 px-4 py-3 rounded mb-6">
+            {submitError}
+          </div>
+        )}
         
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <form onSubmit={handleSubmit} className="p-6">
@@ -224,6 +246,7 @@ const DoctorsManagement: React.FC = () => {
                   onChange={(e) => setDoctorName(e.target.value)}
                   required
                   placeholder="Dr. John Doe"
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -239,6 +262,7 @@ const DoctorsManagement: React.FC = () => {
                   onChange={(e) => setSpecialty(e.target.value)}
                   required
                   placeholder="Cardiology"
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -254,6 +278,7 @@ const DoctorsManagement: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="john.doe@example.com"
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -269,6 +294,7 @@ const DoctorsManagement: React.FC = () => {
                   onChange={(e) => setPhone(e.target.value)}
                   required
                   placeholder="(555) 123-4567"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -278,11 +304,19 @@ const DoctorsManagement: React.FC = () => {
                 type="button"
                 variant="ghost"
                 onClick={() => navigate('/hospital-dashboard/doctors')}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button type="submit" variant="primary">
-                Create Doctor
+              <Button type="submit" variant="primary" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Doctor'
+                )}
               </Button>
             </div>
           </form>
