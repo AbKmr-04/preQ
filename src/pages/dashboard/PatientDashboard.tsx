@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { User, Clock, QrCode, Settings, LogOut, Camera, X, Upload, ArrowRight, CheckCheck } from 'lucide-react';
+import { User, Clock, QrCode, Settings, LogOut, Camera, X, Upload, ArrowRight, CheckCheck, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
 import Logo from '../../components/common/Logo';
@@ -8,6 +8,7 @@ import PatientQuestionnaire from './patient/PatientQuestionnaire';
 import PatientQRScanner from './patient/PatientQRScanner';
 import PatientSettings from './patient/PatientSettings';
 import PatientOverview from './patient/PatientOverview';
+import FindDoctors from './patient/FindDoctors';
 
 const PatientDashboard: React.FC = () => {
   const { currentUser, logout } = useAuth();
@@ -18,9 +19,13 @@ const PatientDashboard: React.FC = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
   
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
   
   return (
@@ -52,6 +57,10 @@ const PatientDashboard: React.FC = () => {
           <Link to="/patient-dashboard" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <Clock className="h-5 w-5 mr-3" />
             My Queue
+          </Link>
+          <Link to="/patient-dashboard/doctors" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+            <Search className="h-5 w-5 mr-3" />
+            Find Doctors
           </Link>
           <Link to="/patient-dashboard/scanner" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <QrCode className="h-5 w-5 mr-3" />
@@ -102,10 +111,10 @@ const PatientDashboard: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-3">
-              <Link to="/patient-dashboard/scanner">
+              <Link to="/patient-dashboard/doctors">
                 <Button variant="primary" size="sm" className="hidden sm:inline-flex">
-                  <QrCode className="h-4 w-4 mr-1" />
-                  Scan QR Code
+                  <Search className="h-4 w-4 mr-1" />
+                  Find Doctors
                 </Button>
               </Link>
             </div>
@@ -116,6 +125,7 @@ const PatientDashboard: React.FC = () => {
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<PatientOverview />} />
+            <Route path="/doctors/*" element={<FindDoctors />} />
             <Route path="/scanner" element={<PatientQRScanner />} />
             <Route path="/questionnaire/:id" element={<PatientQuestionnaire />} />
             <Route path="/settings" element={<PatientSettings />} />
@@ -128,6 +138,10 @@ const PatientDashboard: React.FC = () => {
         <Link to="/patient-dashboard" className="flex flex-col items-center text-neutral-600">
           <Clock className="h-6 w-6" />
           <span className="text-xs mt-1">My Queue</span>
+        </Link>
+        <Link to="/patient-dashboard/doctors" className="flex flex-col items-center text-neutral-600">
+          <Search className="h-6 w-6" />
+          <span className="text-xs mt-1">Find Doctors</span>
         </Link>
         <Link to="/patient-dashboard/scanner" className="flex flex-col items-center text-neutral-600">
           <QrCode className="h-6 w-6" />

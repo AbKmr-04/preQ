@@ -13,8 +13,14 @@ const SignUpPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>(null);
+  
+  // Additional fields for patients
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [phone, setPhone] = useState('');
+  
   const [error, setError] = useState('');
-  const { signup, isLoading } = useAuth();
+  const { signup, isLoading, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,20 +35,54 @@ const SignUpPage: React.FC = () => {
       setError('Passwords do not match');
       return;
     }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
     
     try {
-      await signup(name, email, password, role);
+      setError('');
       
-      // Redirect based on role
+      // Prepare additional data based on role
+      let additionalData = {};
+      
       if (role === 'hospital') {
-        navigate('/hospital-dashboard');
-      } else {
-        navigate('/patient-dashboard');
+        additionalData = {
+          hospitalName: name
+        };
+      } else if (role === 'patient') {
+        if (!age || !gender || !phone) {
+          setError('Please fill in all patient information');
+          return;
+        }
+        additionalData = {
+          age: parseInt(age),
+          gender,
+          phone
+        };
       }
-    } catch (err) {
-      setError('Failed to create an account');
+      
+      await signup(name, email, password, role, additionalData);
+      
+      // Navigation will be handled by useEffect when currentUser changes
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      setError(err.message || 'Failed to create an account');
     }
   };
+
+  // Handle navigation based on user role after signup
+  React.useEffect(() => {
+    if (currentUser && !isLoading) {
+      // Redirect based on role
+      if (currentUser.role === 'hospital') {
+        navigate('/hospital-dashboard');
+      } else if (currentUser.role === 'patient') {
+        navigate('/patient-dashboard');
+      }
+    }
+  }, [currentUser, isLoading, navigate]);
 
   return (
     <>
@@ -75,6 +115,7 @@ const SignUpPage: React.FC = () => {
                           : 'border-neutral-200 hover:border-primary-200 hover:bg-primary-50/50'
                       }`}
                       onClick={() => setRole('hospital')}
+                      disabled={isLoading}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -103,6 +144,7 @@ const SignUpPage: React.FC = () => {
                           : 'border-neutral-200 hover:border-primary-200 hover:bg-primary-50/50'
                       }`}
                       onClick={() => setRole('patient')}
+                      disabled={isLoading}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -137,6 +179,7 @@ const SignUpPage: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
               
@@ -152,8 +195,67 @@ const SignUpPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={isLoading}
                   />
                 </div>
+
+                {/* Patient-specific fields */}
+                {role === 'patient' && (
+                  <>
+                    <div className="mb-4">
+                      <label htmlFor="age" className="block text-neutral-700 font-medium mb-2">
+                        Age
+                      </label>
+                      <input
+                        type="number"
+                        id="age"
+                        className="input-field"
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        required
+                        min="1"
+                        max="120"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label htmlFor="gender" className="block text-neutral-700 font-medium mb-2">
+                        Gender
+                      </label>
+                      <select
+                        id="gender"
+                        className="input-field"
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                        required
+                        disabled={isLoading}
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer-not-to-say">Prefer not to say</option>
+                      </select>
+                    </div>
+
+                    <div className="mb-4">
+                      <label htmlFor="phone" className="block text-neutral-700 font-medium mb-2">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        className="input-field"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        placeholder="(555) 123-4567"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </>
+                )}
                 
                 {/* Password Input */}
                 <div className="mb-4">
@@ -168,6 +270,7 @@ const SignUpPage: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -184,6 +287,7 @@ const SignUpPage: React.FC = () => {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -194,6 +298,7 @@ const SignUpPage: React.FC = () => {
                       type="checkbox"
                       className="h-4 w-4 text-primary-500 focus:ring-primary-400 border-neutral-300 rounded"
                       required
+                      disabled={isLoading}
                     />
                     <span className="ml-2 text-sm text-neutral-600">
                       I agree to the{' '}
