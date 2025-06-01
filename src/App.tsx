@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import HospitalDashboard from './pages/dashboard/HospitalDashboard';
 import PatientDashboard from './pages/dashboard/PatientDashboard';
 import DoctorInterface from './pages/dashboard/DoctorInterface';
+import AdminPage from './pages/AdminPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop';
 import './styles/global.css';
@@ -28,6 +29,7 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           
           {/* Protected routes */}
           <Route 
