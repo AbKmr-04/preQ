@@ -4,10 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  role: 'hospital' | 'patient' | 'doctor';
+  allowedRoles: string[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
   const { currentUser, isLoading } = useAuth();
   
   if (isLoading) {
@@ -19,18 +19,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {
   }
   
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" />;
   }
   
-  if (currentUser.role !== role) {
-    // Redirect to appropriate dashboard or home page
-    if (currentUser.role === 'hospital') {
-      return <Navigate to="/hospital-dashboard" replace />;
-    } else if (currentUser.role === 'patient') {
-      return <Navigate to="/patient-dashboard" replace />;
-    } else {
-      return <Navigate to="/" replace />;
-    }
+  if (!allowedRoles.includes(currentUser.role)) {
+    return <Navigate to="/" />;
   }
   
   return <>{children}</>;

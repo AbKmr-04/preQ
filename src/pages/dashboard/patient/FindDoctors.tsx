@@ -5,7 +5,7 @@ import Button from '../../../components/common/Button';
 import { getAllDoctors, Doctor } from '../../../services/database';
 
 const FindDoctors: React.FC = () => {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState<Array<Doctor & { hospitalId: string; hospitalName: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,7 +25,7 @@ const FindDoctors: React.FC = () => {
       const doctorsData = await getAllDoctors();
       // Filter only active/available doctors
       const activeDoctors = doctorsData.filter(doctor => 
-        doctor.available && (doctor.status === 'active' || doctor.status === undefined)
+        doctor.isAvailable && (doctor.status === 'active' || doctor.status === undefined)
       );
       setDoctors(activeDoctors);
     } catch (err) {
@@ -38,23 +38,24 @@ const FindDoctors: React.FC = () => {
 
   // Get unique specialties for filter
   const specialties = Array.from(new Set(
-    doctors.map(doctor => doctor.specialty || doctor.specialization).filter(Boolean)
+    doctors.map(doctor => doctor.specialization).filter(Boolean)
   ));
 
   // Filter doctors based on search and specialty
   const filteredDoctors = doctors.filter(doctor => {
     const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (doctor.specialty || doctor.specialization)?.toLowerCase().includes(searchTerm.toLowerCase());
+      doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.hospitalName.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesSpecialty = !selectedSpecialty || 
-      (doctor.specialty || doctor.specialization) === selectedSpecialty;
+      doctor.specialization === selectedSpecialty;
     
     return matchesSearch && matchesSpecialty;
   });
 
-  const handleBookAppointment = (doctorId: string) => {
-    // Navigate to booking page (we'll implement this next)
-    navigate(`/patient-dashboard/doctors/book/${doctorId}`);
+  const handleBookAppointment = (doctorId: string, hospitalId: string) => {
+    // Navigate to booking page with both doctor and hospital IDs
+    navigate(`/patient-dashboard/doctors/book/${hospitalId}/${doctorId}`);
   };
 
   const DoctorsList = () => {
@@ -129,11 +130,17 @@ const FindDoctors: React.FC = () => {
                   </div>
                   <div className="ml-3">
                     <h3 className="font-semibold text-neutral-800">{doctor.name}</h3>
-                    <p className="text-sm text-neutral-600">{doctor.specialty || doctor.specialization}</p>
+                    <p className="text-sm text-neutral-600">{doctor.specialization}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2 mb-4">
+                  {doctor.hospitalName && (
+                    <div className="flex items-center text-sm text-neutral-600">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      {doctor.hospitalName}
+                    </div>
+                  )}
                   {doctor.email && (
                     <div className="flex items-center text-sm text-neutral-600">
                       <User className="h-4 w-4 mr-2" />
@@ -156,7 +163,7 @@ const FindDoctors: React.FC = () => {
                 <Button
                   variant="primary"
                   fullWidth
-                  onClick={() => handleBookAppointment(doctor.id!)}
+                  onClick={() => handleBookAppointment(doctor.id!, doctor.hospitalId)}
                 >
                   <Calendar className="h-4 w-4 mr-2" />
                   Book Appointment

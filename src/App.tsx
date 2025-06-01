@@ -8,7 +8,8 @@ import PricingPage from './pages/PricingPage';
 import ContactPage from './pages/ContactPage';
 import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
-import HospitalDashboard from './pages/dashboard/HospitalDashboard';
+import HospitalSelectionPage from './pages/HospitalSelectionPage';
+import StaffDashboard from './pages/dashboard/StaffDashboard';
 import PatientDashboard from './pages/dashboard/PatientDashboard';
 import DoctorInterface from './pages/dashboard/DoctorInterface';
 import AdminPage from './pages/AdminPage';
@@ -18,8 +19,8 @@ import './styles/global.css';
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -31,27 +32,37 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin" element={<AdminPage />} />
           
+          {/* Hospital selection for staff */}
+          <Route 
+            path="/hospital-selection" 
+            element={
+              <ProtectedRoute allowedRoles={['staff']}>
+                <HospitalSelectionPage />
+              </ProtectedRoute>
+            } 
+          />
+          
           {/* Protected routes */}
           <Route 
-            path="/hospital-dashboard/*" 
+            path="/dashboard/staff" 
             element={
-              <ProtectedRoute role="hospital">
-                <HospitalDashboard />
+              <ProtectedRoute allowedRoles={['staff']}>
+                <StaffDashboard />
               </ProtectedRoute>
             } 
           />
           <Route 
-            path="/patient-dashboard/*" 
+            path="/dashboard/patient" 
             element={
-              <ProtectedRoute role="patient">
+              <ProtectedRoute allowedRoles={['patient']}>
                 <PatientDashboard />
               </ProtectedRoute>
             } 
           />
           <Route path="/doctor/:id" element={<DoctorInterface />} />
         </Routes>
-      </AuthProvider>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -3,7 +3,7 @@ import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { Search, Plus, Download, QrCode, Edit, Trash2, User, Loader2 } from 'lucide-react';
 import Button from '../../../components/common/Button';
 import { useAuth } from '../../../context/AuthContext';
-import { addDoctor, getAllDoctors, Doctor } from '../../../services/database';
+import { addDoctor, getHospitalDoctors, getUser, Doctor } from '../../../services/database';
 
 const DoctorsManagement: React.FC = () => {
   const { currentUser } = useAuth();
@@ -23,7 +23,15 @@ const DoctorsManagement: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const doctorsData = await getAllDoctors(currentUser.id); // Using user ID as hospital ID for now
+      
+      // Get the user to find their hospital ID
+      const userData = await getUser(currentUser.id);
+      if (!userData?.hospitalId) {
+        setError('User is not associated with a hospital');
+        return;
+      }
+      
+      const doctorsData = await getHospitalDoctors(userData.hospitalId);
       setDoctors(doctorsData);
     } catch (err) {
       console.error('Error loading doctors:', err);
@@ -35,7 +43,7 @@ const DoctorsManagement: React.FC = () => {
 
   const filteredDoctors = doctors.filter(doctor => 
     doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (doctor.specialty || doctor.specialization)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doctor.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
@@ -114,7 +122,7 @@ const DoctorsManagement: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-neutral-600">{doctor.specialty || doctor.specialization}</td>
+                    <td className="px-6 py-4 text-neutral-600">{doctor.specialization}</td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-neutral-600">{doctor.email || 'N/A'}</div>
                       <div className="text-sm text-neutral-500">{doctor.phone || 'N/A'}</div>
@@ -122,12 +130,12 @@ const DoctorsManagement: React.FC = () => {
                     <td className="px-6 py-4">
                       <span 
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          (doctor.status === 'active' || doctor.available) 
+                          (doctor.status === 'active' && doctor.isAvailable) 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-neutral-100 text-neutral-800'
                         }`}
                       >
-                        {(doctor.status === 'active' || doctor.available) ? 'Active' : 'Inactive'}
+                        {(doctor.status === 'active' && doctor.isAvailable) ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -191,19 +199,24 @@ const DoctorsManagement: React.FC = () => {
       setSubmitError(null);
       
       try {
+        // Get user data to find hospital ID
+        const userData = await getUser(currentUser.id);
+        if (!userData?.hospitalId) {
+          setSubmitError('User is not associated with a hospital');
+          return;
+        }
+
         // Create new doctor data with all required fields
-        const newDoctorData: Omit<Doctor, 'id' | 'createdAt'> = {
+        const newDoctorData: Omit<Doctor, 'id' | 'addedAt' | 'status'> = {
           name: doctorName,
-          specialization: specialty, // Required field
-          specialty: specialty, // For UI compatibility
+          specialization: specialty,
           email,
           phone,
-          hospitalId: currentUser.id, // Required field
-          available: true, // Required field
-          status: 'active'
+          isAvailable: true,
+          addedBy: currentUser.id
         };
         
-        const doctorId = await addDoctor(newDoctorData);
+        const doctorId = await addDoctor(userData.hospitalId, newDoctorData);
         console.log('Doctor added with ID:', doctorId);
         
         // Reload the doctors list

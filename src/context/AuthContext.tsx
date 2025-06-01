@@ -6,10 +6,11 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from 'firebase/auth';
+import { Timestamp } from 'firebase/firestore';
 import { auth } from '../config/firebase';
 import { createUser, getUser, User } from '../services/database';
 
-type UserRole = 'hospital' | 'patient' | 'doctor' | null;
+type UserRole = 'staff' | 'patient' | 'doctor' | null;
 
 interface AuthContextType {
   currentUser: User | null;
@@ -25,7 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
@@ -39,24 +40,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
-      
       if (user) {
-        // Get user data from Firestore
-        try {
-          const userData = await getUser(user.uid);
-          setCurrentUser(userData);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          setCurrentUser(null);
-        }
+        const userData = await getUser(user.uid);
+        setCurrentUser(userData);
       } else {
         setCurrentUser(null);
       }
-      
       setIsLoading(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -78,10 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setIsLoading(true);
     try {
-      // Create Firebase Auth user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Create user document in Firestore
       const userData: Omit<User, 'id' | 'createdAt'> = {
         name,
         email,
@@ -91,11 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       await createUser(userCredential.user.uid, userData);
       
-      // Set current user
       const newUser: User = {
         id: userCredential.user.uid,
         ...userData,
-        createdAt: new Date()
+        createdAt: Timestamp.now()
       };
       setCurrentUser(newUser);
     } catch (error) {
