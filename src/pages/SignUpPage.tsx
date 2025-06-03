@@ -45,11 +45,15 @@ const SignUpPage: React.FC = () => {
         formData.role
       );
       
-      // Redirect based on role
+      console.log('Signup successful, role:', formData.role);
+      
+      // Handle role-based navigation
       if (formData.role === 'staff') {
-        navigate('/hospital-selection');
-      } else {
-        navigate('/dashboard/patient');
+        console.log('Redirecting to hospital selection');
+        window.location.href = '/hospital-selection';
+      } else if (formData.role === 'patient') {
+        console.log('Redirecting to patient dashboard');
+        window.location.href = '/dashboard/patient';
       }
     } catch (err) {
       setError('Error creating account. Please try again.');

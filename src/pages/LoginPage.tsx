@@ -17,9 +17,10 @@ const LoginPage: React.FC = () => {
     
     try {
       setError('');
-      await login(email, password);
+      const result = await login(email, password);
       
-      // The navigation will be handled by useEffect when currentUser changes
+      // Navigation is now handled immediately after login success
+      // No need to wait for useEffect
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Invalid email or password');
@@ -29,14 +30,21 @@ const LoginPage: React.FC = () => {
   // Handle navigation based on user role after login
   React.useEffect(() => {
     if (currentUser && !isLoading) {
+      console.log('Login successful, user role:', currentUser.role);
+      
       // Redirect based on role
-      if (currentUser.role === 'hospital') {
-        navigate('/hospital-dashboard');
+      if (currentUser.role === 'staff' || currentUser.role === 'hospital') {
+        console.log('Redirecting to staff dashboard');
+        window.location.href = '/dashboard/staff';
       } else if (currentUser.role === 'patient') {
-        navigate('/patient-dashboard');
+        console.log('Redirecting to patient dashboard');
+        window.location.href = '/dashboard/patient';
+      } else {
+        console.log('Unknown role, redirecting to home');
+        window.location.href = '/';
       }
     }
-  }, [currentUser, isLoading, navigate]);
+  }, [currentUser, isLoading]);
 
   return (
     <>

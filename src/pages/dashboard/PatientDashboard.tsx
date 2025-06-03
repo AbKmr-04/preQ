@@ -155,19 +155,19 @@ const PatientDashboard: React.FC = () => {
         
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1">
-          <Link to="/dashboard/patient" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+          <Link to="" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <Clock className="h-5 w-5 mr-3" />
             My Queue
           </Link>
-          <Link to="/dashboard/patient/doctors" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+          <Link to="doctors" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <Search className="h-5 w-5 mr-3" />
             Find Doctors
           </Link>
-          <Link to="/dashboard/patient/scanner" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+          <Link to="scanner" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <QrCode className="h-5 w-5 mr-3" />
             Scan QR Code
           </Link>
-          <Link to="/dashboard/patient/settings" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+          <Link to="settings" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <Settings className="h-5 w-5 mr-3" />
             Settings
           </Link>
@@ -216,117 +216,7 @@ const PatientDashboard: React.FC = () => {
         {/* Page Content */}
         <main className="flex-1 p-6">
           <Routes>
-            <Route path="/" element={
-              <div>
-                {/* My Queues Section */}
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold mb-4">My Queue Status</h2>
-                  {myQueues.length > 0 ? (
-                    <div className="grid gap-4">
-                      {myQueues.map((queue, index) => (
-                        <div key={index} className="bg-white rounded-lg shadow p-6">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-semibold text-lg">Dr. {queue.doctorName}</h3>
-                              <p className="text-gray-600">{queue.hospitalName}</p>
-                              <div className="mt-2">
-                                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                                  Queue #{queue.entry.number}
-                                </span>
-                                <span className={`ml-2 inline-block px-3 py-1 rounded-full text-sm capitalize ${
-                                  queue.entry.status === 'waiting' ? 'bg-yellow-100 text-yellow-800' :
-                                  queue.entry.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                                  queue.entry.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
-                                  {queue.entry.status}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-right text-sm text-gray-500">
-                              <p>Joined: {queue.entry.joinedAt.toDate().toLocaleString()}</p>
-                              {queue.entry.completedAt && (
-                                <p>Completed: {queue.entry.completedAt.toDate().toLocaleString()}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="bg-gray-50 rounded-lg p-8 text-center">
-                      <p className="text-gray-500 mb-4">You're not in any queues today</p>
-                      <Link to="/dashboard/patient/doctors">
-                        <Button variant="primary">Find Doctors</Button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold mb-4">Find Available Doctors</h2>
-                  {successMessage && (
-                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                      {successMessage}
-                    </div>
-                  )}
-                  {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                      {error}
-                    </div>
-                  )}
-                  
-                  {/* Hospital Selection */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Hospital
-                    </label>
-                    <select
-                      value={selectedHospital?.id || ''}
-                      onChange={(e) => {
-                        const hospital = hospitals.find(h => h.id === e.target.value);
-                        setSelectedHospital(hospital || null);
-                      }}
-                      className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select a hospital</option>
-                      {hospitals.map(hospital => (
-                        <option key={hospital.id} value={hospital.id}>
-                          {hospital.name} - {hospital.address}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Doctors List */}
-                  {selectedHospital && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {doctors.map(doctor => (
-                        <div key={doctor.id} className="bg-white rounded-lg shadow p-4">
-                          <h3 className="font-semibold">{doctor.name}</h3>
-                          <p className="text-gray-600">{doctor.specialization}</p>
-                          <p className="text-gray-600 text-sm">{doctor.email}</p>
-                          <div className="mt-4">
-                            <button
-                              onClick={() => handleJoinQueue(doctor)}
-                              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-                            >
-                              Join Queue
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {doctors.length === 0 && (
-                        <div className="col-span-full text-center py-8 text-gray-500">
-                          No available doctors at this hospital today
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            } />
+            <Route path="/" element={<PatientOverview />} />
             <Route path="/doctors/*" element={<FindDoctors />} />
             <Route path="/scanner" element={<PatientQRScanner />} />
             <Route path="/questionnaire/:id" element={<PatientQuestionnaire />} />
@@ -337,19 +227,19 @@ const PatientDashboard: React.FC = () => {
       
       {/* Mobile Quick Actions */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t py-3 px-4 flex justify-around z-20">
-        <Link to="/dashboard/patient" className="flex flex-col items-center text-neutral-600">
+        <Link to="" className="flex flex-col items-center text-neutral-600">
           <Clock className="h-6 w-6" />
           <span className="text-xs mt-1">My Queue</span>
         </Link>
-        <Link to="/dashboard/patient/doctors" className="flex flex-col items-center text-neutral-600">
+        <Link to="doctors" className="flex flex-col items-center text-neutral-600">
           <Search className="h-6 w-6" />
           <span className="text-xs mt-1">Find Doctors</span>
         </Link>
-        <Link to="/dashboard/patient/scanner" className="flex flex-col items-center text-neutral-600">
+        <Link to="scanner" className="flex flex-col items-center text-neutral-600">
           <QrCode className="h-6 w-6" />
           <span className="text-xs mt-1">Scan QR</span>
         </Link>
-        <Link to="/dashboard/patient/settings" className="flex flex-col items-center text-neutral-600">
+        <Link to="settings" className="flex flex-col items-center text-neutral-600">
           <Settings className="h-6 w-6" />
           <span className="text-xs mt-1">Settings</span>
         </Link>

@@ -116,7 +116,7 @@ const HospitalOverview: React.FC = () => {
         <div className="p-6 border-b">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Active Queues</h2>
-            <Link to="/hospital-dashboard/queues">
+            <Link to="queues">
               <Button variant="ghost" size="sm">View All</Button>
             </Link>
           </div>
@@ -155,7 +155,7 @@ const HospitalOverview: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Link to={`/hospital-dashboard/queues/${queue.id}`} className="text-primary-500 hover:text-primary-600">
+                    <Link to={`queues/${queue.id}`} className="text-primary-500 hover:text-primary-600">
                       Details
                     </Link>
                   </td>
@@ -215,13 +215,13 @@ const HospitalOverview: React.FC = () => {
               Generate new QR codes for doctors or create a new queue.
             </p>
             <div className="grid grid-cols-2 gap-4 w-full">
-              <Link to="/hospital-dashboard/doctors/new">
+              <Link to="doctors/new">
                 <Button variant="primary" fullWidth>
                   <Users className="h-4 w-4 mr-2" />
                   New Doctor
                 </Button>
               </Link>
-              <Link to="/hospital-dashboard/queues/new">
+              <Link to="queues/new">
                 <Button variant="outline" fullWidth>
                   <Clock className="h-4 w-4 mr-2" />
                   New Queue

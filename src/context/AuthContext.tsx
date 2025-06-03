@@ -10,7 +10,7 @@ import { Timestamp } from 'firebase/firestore';
 import { auth } from '../config/firebase';
 import { createUser, getUser, User } from '../services/database';
 
-type UserRole = 'staff' | 'patient' | 'doctor' | null;
+type UserRole = 'staff' | 'patient' | 'doctor' | 'hospital' | null;
 
 interface AuthContextType {
   currentUser: User | null;
@@ -19,6 +19,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, role: UserRole, additionalData?: any) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -39,9 +40,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('Auth state changed:', user ? user.uid : 'No user');
       setFirebaseUser(user);
       if (user) {
+        console.log('Fetching user data for:', user.uid);
         const userData = await getUser(user.uid);
+        console.log('User data received:', userData);
         setCurrentUser(userData);
       } else {
         setCurrentUser(null);
@@ -53,10 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
+    console.log('Login attempt for:', email);
     setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Firebase login successful:', userCredential.user.uid);
       const userData = await getUser(userCredential.user.uid);
+      console.log('User data after login:', userData);
       setCurrentUser(userData);
     } catch (error) {
       console.error('Login error:', error);
@@ -107,6 +114,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshUser = async () => {
+    if (firebaseUser) {
+      try {
+        const userData = await getUser(firebaseUser.uid);
+        setCurrentUser(userData);
+      } catch (error) {
+        console.error('Refresh user error:', error);
+        throw error;
+      }
+    }
+  };
+
   const value = {
     currentUser,
     firebaseUser,
@@ -114,6 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     signup,
     logout,
+    refreshUser,
     isAuthenticated: !!currentUser
   };
 

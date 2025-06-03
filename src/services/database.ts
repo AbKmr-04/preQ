@@ -20,7 +20,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'staff' | 'patient' | 'doctor';
+  role: 'staff' | 'patient' | 'doctor' | 'hospital';
   createdAt: Timestamp;
   hospitalId?: string; // For staff members
   // Patient-specific fields

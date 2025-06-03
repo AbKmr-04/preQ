@@ -54,10 +54,10 @@ const Header: React.FC = () => {
     if (!currentUser) return null;
     
     switch (currentUser.role) {
-      case 'hospital':
-        return '/hospital-dashboard';
+      case 'staff':
+        return '/dashboard/staff';
       case 'patient':
-        return '/patient-dashboard';
+        return '/dashboard/patient';
       default:
         return '/';
     }

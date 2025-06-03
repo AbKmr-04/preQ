@@ -55,7 +55,7 @@ const FindDoctors: React.FC = () => {
 
   const handleBookAppointment = (doctorId: string, hospitalId: string) => {
     // Navigate to booking page with both doctor and hospital IDs
-    navigate(`/patient-dashboard/doctors/book/${hospitalId}/${doctorId}`);
+    navigate(`/dashboard/patient/doctors/book/${hospitalId}/${doctorId}`);
   };
 
   const DoctorsList = () => {

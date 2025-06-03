@@ -86,7 +86,7 @@ const QueueManagement: React.FC = () => {
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-neutral-400" />
             </div>
-            <Link to="/hospital-dashboard/queues/new">
+            <Link to="new">
               <Button variant="primary">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Queue
@@ -146,7 +146,7 @@ const QueueManagement: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Link to={`/hospital-dashboard/queues/${queue.id}`} className="text-primary-500 hover:text-primary-600">
+                      <Link to={`${queue.id}`} className="text-primary-500 hover:text-primary-600">
                         View Details
                       </Link>
                     </td>
@@ -163,7 +163,7 @@ const QueueManagement: React.FC = () => {
               <p className="text-neutral-500 mb-4">
                 {searchTerm ? 'Try a different search term' : 'Create your first queue to get started'}
               </p>
-              <Link to="/hospital-dashboard/queues/new">
+              <Link to="new">
                 <Button variant="primary">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Queue
@@ -213,7 +213,7 @@ const QueueManagement: React.FC = () => {
       };
       
       setQueues([...queues, newQueue]);
-      navigate('/hospital-dashboard/queues');
+      navigate('/dashboard/staff/queues');
     };
     
     return (
@@ -299,7 +299,7 @@ const QueueManagement: React.FC = () => {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => navigate('/hospital-dashboard/queues')}
+                onClick={() => navigate('/dashboard/staff/queues')}
               >
                 Cancel
               </Button>

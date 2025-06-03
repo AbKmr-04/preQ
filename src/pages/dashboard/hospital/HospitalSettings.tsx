@@ -98,13 +98,13 @@ const HospitalSettings: React.FC = () => {
             <div className="p-6">
               <ul className="space-y-3">
                 <li>
-                  <Link to="/hospital-dashboard/doctors/new" className="flex items-center text-neutral-700 hover:text-primary-500 transition-colors">
+                  <Link to="../doctors/new" className="flex items-center text-neutral-700 hover:text-primary-500 transition-colors">
                     <UserPlus className="h-5 w-5 mr-3" />
                     <span>Add New Doctor</span>
                   </Link>
                 </li>
                 <li>
-                  <Link to="/hospital-dashboard/queues/new" className="flex items-center text-neutral-700 hover:text-primary-500 transition-colors">
+                  <Link to="../queues/new" className="flex items-center text-neutral-700 hover:text-primary-500 transition-colors">
                     <User className="h-5 w-5 mr-3" />
                     <span>Create New Queue</span>
                   </Link>

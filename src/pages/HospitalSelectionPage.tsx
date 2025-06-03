@@ -9,11 +9,14 @@ import {
 } from '../services/database';
 
 const HospitalSelectionPage: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState<'join' | 'create' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Debug logging
+  console.log('HospitalSelectionPage - currentUser:', currentUser);
 
   // Join hospital form
   const [hospitalId, setHospitalId] = useState('');
@@ -28,25 +31,39 @@ const HospitalSelectionPage: React.FC = () => {
     e.preventDefault();
     if (!currentUser || !hospitalId.trim()) return;
 
+    console.log('Starting hospital join process for:', hospitalId.trim());
     setIsLoading(true);
     setError(null);
 
     try {
       // Check if hospital exists
+      console.log('Checking if hospital exists...');
       const hospital = await getHospital(hospitalId.trim());
+      console.log('Hospital found:', hospital);
+      
       if (!hospital) {
         setError('Hospital not found. Please check the Hospital ID.');
         return;
       }
 
       // Join the hospital
+      console.log('Joining hospital...');
       await joinHospital(hospitalId.trim());
+      console.log('Hospital joined successfully');
+      
+      console.log('Updating user hospital...');
       await updateUserHospital(currentUser.id, hospitalId.trim());
+      console.log('User hospital updated successfully');
 
+      console.log('Refreshing user data...');
+      await refreshUser();
+      console.log('User data refreshed');
+
+      console.log('Navigating to dashboard...');
       navigate('/dashboard/staff');
     } catch (err) {
+      console.error('Error in handleJoinHospital:', err);
       setError('Error joining hospital. Please try again.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -56,28 +73,38 @@ const HospitalSelectionPage: React.FC = () => {
     e.preventDefault();
     if (!currentUser || !createForm.name.trim() || !createForm.address.trim()) return;
 
+    console.log('Starting hospital creation process:', createForm);
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log('Creating hospital...');
       const hospitalId = await createHospital({
         name: createForm.name.trim(),
         address: createForm.address.trim(),
         createdBy: currentUser.id
       });
+      console.log('Hospital created with ID:', hospitalId);
 
+      console.log('Updating user hospital...');
       await updateUserHospital(currentUser.id, hospitalId);
+      console.log('User hospital updated successfully');
 
+      console.log('Refreshing user data...');
+      await refreshUser();
+      console.log('User data refreshed');
+
+      console.log('Navigating to dashboard...');
       navigate('/dashboard/staff');
     } catch (err) {
+      console.error('Error in handleCreateHospital:', err);
       setError('Error creating hospital. Please try again.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!currentUser || currentUser.role !== 'staff') {
+  if (!currentUser || (currentUser.role !== 'staff' && currentUser.role !== 'hospital')) {
     navigate('/');
     return null;
   }

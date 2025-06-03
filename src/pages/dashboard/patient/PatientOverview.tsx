@@ -154,7 +154,7 @@ const PatientOverview: React.FC = () => {
             <p className="text-neutral-500 mb-6 text-center max-w-md">
               Scan a doctor's QR code to join their queue and complete the pre-appointment questionnaire.
             </p>
-            <Link to="/patient-dashboard/scanner">
+            <Link to="scanner">
               <Button variant="primary">
                 <QrCode className="h-4 w-4 mr-2" />
                 Scan QR Code

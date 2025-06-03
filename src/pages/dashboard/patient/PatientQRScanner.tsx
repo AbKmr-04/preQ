@@ -18,7 +18,7 @@ const PatientQRScanner: React.FC = () => {
       // Simulate successful scan
       // In a real app, this would process the QR code data
       const queueId = '123';
-      navigate(`/patient-dashboard/questionnaire/${queueId}`);
+      navigate(`/dashboard/patient/questionnaire/${queueId}`);
     }, 2000);
   };
   

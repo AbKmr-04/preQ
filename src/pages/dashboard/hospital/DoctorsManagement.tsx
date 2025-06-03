@@ -87,7 +87,7 @@ const DoctorsManagement: React.FC = () => {
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-neutral-400" />
             </div>
-            <Link to="/hospital-dashboard/doctors/new">
+            <Link to="/dashboard/staff/doctors/new">
               <Button variant="primary">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Doctor
@@ -165,7 +165,7 @@ const DoctorsManagement: React.FC = () => {
               <p className="text-neutral-500 mb-4">
                 {searchTerm ? 'Try a different search term' : 'Add your first doctor to get started'}
               </p>
-              <Link to="/hospital-dashboard/doctors/new">
+              <Link to="/dashboard/staff/doctors/new">
                 <Button variant="primary">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Doctor
@@ -223,7 +223,7 @@ const DoctorsManagement: React.FC = () => {
         await loadDoctors();
         
         // Navigate back to doctors list
-        navigate('/hospital-dashboard/doctors');
+        navigate('/dashboard/staff/doctors');
       } catch (error) {
         console.error('Error adding doctor:', error);
         setSubmitError('Failed to add doctor. Please try again.');
@@ -316,7 +316,7 @@ const DoctorsManagement: React.FC = () => {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => navigate('/hospital-dashboard/doctors')}
+                onClick={() => navigate('/dashboard/staff/doctors')}
                 disabled={isSubmitting}
               >
                 Cancel

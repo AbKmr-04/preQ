@@ -14,6 +14,13 @@ const HospitalDashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const navigate = useNavigate();
   
+  // Redirect staff users to hospital selection if they haven't selected one
+  React.useEffect(() => {
+    if (currentUser && (currentUser.role === 'staff' || currentUser.role === 'hospital') && !currentUser.hospitalId) {
+      navigate('/hospital-selection');
+    }
+  }, [currentUser, navigate]);
+  
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -49,19 +56,19 @@ const HospitalDashboard: React.FC = () => {
         
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1">
-          <Link to="/hospital-dashboard" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+          <Link to="" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <Clipboard className="h-5 w-5 mr-3" />
             Overview
           </Link>
-          <Link to="/hospital-dashboard/doctors" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+          <Link to="doctors" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <Users className="h-5 w-5 mr-3" />
             Doctors
           </Link>
-          <Link to="/hospital-dashboard/queues" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+          <Link to="queues" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <Clock className="h-5 w-5 mr-3" />
             Queues
           </Link>
-          <Link to="/hospital-dashboard/settings" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
+          <Link to="settings" className="flex items-center px-4 py-3 text-neutral-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg">
             <Settings className="h-5 w-5 mr-3" />
             Settings
           </Link>
@@ -106,13 +113,13 @@ const HospitalDashboard: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-3">
-              <Link to="/hospital-dashboard/doctors/new">
+              <Link to="doctors/new">
                 <Button variant="primary" size="sm" className="hidden sm:inline-flex">
                   <Plus className="h-4 w-4 mr-1" />
                   Add Doctor
                 </Button>
               </Link>
-              <Link to="/hospital-dashboard/queues/new">
+              <Link to="queues/new">
                 <Button variant="outline" size="sm" className="hidden sm:inline-flex">
                   <Plus className="h-4 w-4 mr-1" />
                   Create Queue
@@ -135,19 +142,19 @@ const HospitalDashboard: React.FC = () => {
       
       {/* Mobile Quick Actions */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t py-3 px-4 flex justify-around z-20">
-        <Link to="/hospital-dashboard" className="flex flex-col items-center text-neutral-600">
+        <Link to="" className="flex flex-col items-center text-neutral-600">
           <Clipboard className="h-6 w-6" />
           <span className="text-xs mt-1">Overview</span>
         </Link>
-        <Link to="/hospital-dashboard/doctors" className="flex flex-col items-center text-neutral-600">
+        <Link to="doctors" className="flex flex-col items-center text-neutral-600">
           <Users className="h-6 w-6" />
           <span className="text-xs mt-1">Doctors</span>
         </Link>
-        <Link to="/hospital-dashboard/queues" className="flex flex-col items-center text-neutral-600">
+        <Link to="queues" className="flex flex-col items-center text-neutral-600">
           <Clock className="h-6 w-6" />
           <span className="text-xs mt-1">Queues</span>
         </Link>
-        <Link to="/hospital-dashboard/settings" className="flex flex-col items-center text-neutral-600">
+        <Link to="settings" className="flex flex-col items-center text-neutral-600">
           <Settings className="h-6 w-6" />
           <span className="text-xs mt-1">Settings</span>
         </Link>

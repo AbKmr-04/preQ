@@ -131,7 +131,7 @@ const PatientQuestionnaire: React.FC = () => {
       
       // Simulate queue joining - in a real app, this would add the patient to the queue
       setTimeout(() => {
-        navigate('/patient-dashboard');
+        navigate('/dashboard/patient');
       }, 3000);
     }, 2000);
   };
